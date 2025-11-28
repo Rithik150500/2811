@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Risk Analysis System</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚖️ Legal Risk Analysis System</h1>
+            <p class="subtitle">AI-Powered Due Diligence Platform</p>
+        </header>
+
+        <main>
+            <!-- New Analysis Form -->
+            <section class="card">
+                <h2>Start New Analysis</h2>
+                <form id="analysisForm" action="/api/analysis/start" method="POST">
+                    <div class="form-group">
+                        <label for="data_room_path">Data Room Path</label>
+                        <input
+                            type="text"
+                            id="data_room_path"
+                            name="data_room_path"
+                            placeholder="./preprocessed_data_room"
+                            value="./preprocessed_data_room"
+                            required
+                        >
+                        <small>Path to the preprocessed legal data room directory</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="output_directory">Output Directory</label>
+                        <input
+                            type="text"
+                            id="output_directory"
+                            name="output_directory"
+                            placeholder="./analysis_output"
+                            value="./analysis_output"
+                        >
+                        <small>Directory where analysis results will be saved</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="analysis_scope">Analysis Scope (Optional)</label>
+                        <textarea
+                            id="analysis_scope"
+                            name="analysis_scope"
+                            rows="4"
+                            placeholder="Leave empty for default comprehensive analysis, or specify custom scope..."
+                        ></textarea>
+                        <small>Custom analysis scope or leave blank for comprehensive review</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        🚀 Start Analysis
+                    </button>
+                </form>
+
+                <div id="formStatus" class="status-message" style="display: none;"></div>
+            </section>
+
+            <!-- Active Sessions -->
+            <section class="card">
+                <h2>Active Sessions</h2>
+
+                {% if sessions %}
+                <div class="sessions-grid">
+                    {% for session in sessions %}
+                    <div class="session-card status-{{ session.status }}">
+                        <div class="session-header">
+                            <h3>📋 Session {{ session.session_id[:8] }}...</h3>
+                            <span class="status-badge status-{{ session.status }}">
+                                {{ session.status }}
+                            </span>
+                        </div>
+
+                        <div class="session-details">
+                            <p><strong>Created:</strong> {{ session.created_at }}</p>
+                            <p><strong>Data Room:</strong> {{ session.data_room_path }}</p>
+                            <p><strong>Iteration:</strong> {{ session.current_iteration }}</p>
+                        </div>
+
+                        <div class="session-actions">
+                            <a href="/session/{{ session.session_id }}" class="btn btn-small">
+                                View Details →
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p>No active sessions. Start a new analysis above to get started.</p>
+                </div>
+                {% endif %}
+            </section>
+
+            <!-- System Info -->
+            <section class="card info-card">
+                <h3>ℹ️ System Information</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Model:</strong> Claude Sonnet 4.5
+                    </div>
+                    <div class="info-item">
+                        <strong>Framework:</strong> deepagents + LangGraph
+                    </div>
+                    <div class="info-item">
+                        <strong>Active Sessions:</strong> {{ sessions|length }}
+                    </div>
+                    <div class="info-item">
+                        <strong>Status:</strong> <span class="status-healthy">Operational</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Legal Risk Analysis System v1.0.0 | Powered by Claude Sonnet 4.5</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

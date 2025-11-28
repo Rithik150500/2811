@@ -150,10 +150,24 @@ Critical operations require human approval:
 ├── approval_workflow.py         # Human-in-the-loop system
 ├── file_extraction.py           # Output extraction utilities
 ├── legal_preprocessing_v2.py    # Document preprocessing
-└── CLAUDE.md                    # This documentation
+├── web_app.py                   # FastAPI web application
+├── requirements.txt             # Python dependencies
+├── CLAUDE.md                    # This documentation
+├── DEPLOYMENT.md                # Deployment guide
+├── templates/                   # HTML templates
+│   ├── index.html              # Main dashboard
+│   └── session.html            # Session detail view
+└── static/                      # Static assets
+    ├── css/
+    │   └── style.css           # Application styles
+    └── js/
+        ├── main.js             # Dashboard JavaScript
+        └── session.js          # Session page JavaScript
 ```
 
-## Usage Example
+## Usage Options
+
+### Option 1: Command Line Interface
 
 ```python
 from main_application import run_legal_risk_analysis
@@ -170,6 +184,108 @@ result = run_legal_risk_analysis(
 # - iterations: Number of approval cycles
 # - final_result: Complete LangGraph state
 ```
+
+### Option 2: Web Application Interface
+
+The system includes a comprehensive web application built with FastAPI that provides:
+
+#### Starting the Web Application
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Set API key
+export ANTHROPIC_API_KEY="your-api-key-here"
+
+# Run the web application
+python web_app.py
+```
+
+Access the web interface at: **http://localhost:8000**
+
+#### Web Application Features
+
+**1. Interactive Dashboard**
+   - Start new analysis sessions with custom parameters
+   - View all active and completed sessions
+   - Real-time status updates via WebSocket
+   - Session management and monitoring
+
+**2. Analysis Session Management**
+   - Create new analysis sessions with custom data room paths
+   - Specify analysis scope and output directories
+   - Track session status and progress
+   - View iteration counts and current phase
+
+**3. Human-in-the-Loop Approval Interface**
+   - Web-based approval workflow for agent decisions
+   - Review proposed tool calls with arguments
+   - Three approval options:
+     - **Approve**: Accept proposed action as-is
+     - **Modify**: Edit arguments before execution
+     - **Reject**: Block the proposed action
+   - Real-time updates when approvals are needed
+
+**4. Real-time Updates**
+   - WebSocket connections for live progress tracking
+   - Status changes broadcast instantly
+   - Approval requests appear automatically
+   - Completion notifications with file extraction
+
+**5. File Management**
+   - Download generated reports and findings
+   - Browse all files created during analysis
+   - Organized by category and session
+   - Direct download links for all outputs
+
+**6. Session Actions**
+   - Refresh session status
+   - Delete completed sessions
+   - View detailed session information
+   - Monitor resource usage
+
+#### Web Application Architecture
+
+```
+FastAPI Backend (web_app.py)
+├── RESTful API Endpoints
+│   ├── POST /api/analysis/start       - Start new analysis
+│   ├── POST /api/approval/submit      - Submit approval decisions
+│   ├── GET  /api/session/{id}         - Get session details
+│   ├── GET  /api/sessions             - List all sessions
+│   ├── GET  /api/download/{id}/{file} - Download files
+│   └── DELETE /api/session/{id}       - Delete session
+│
+├── WebSocket Endpoint
+│   └── WS /ws/{session_id}            - Real-time updates
+│
+├── HTML Templates (Jinja2)
+│   ├── index.html                     - Main dashboard
+│   └── session.html                   - Session detail view
+│
+└── Static Assets
+    ├── CSS (Professional styling)
+    └── JavaScript (Interactive features)
+```
+
+#### API Documentation
+
+The web application includes automatic API documentation:
+
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+#### Deployment
+
+For production deployment, see `DEPLOYMENT.md` which covers:
+
+- **Development Setup**: Quick start for local testing
+- **Production Deployment**: Systemd, Gunicorn, Nginx configuration
+- **Docker Deployment**: Containerized deployment with docker-compose
+- **Security**: Authentication, CORS, rate limiting
+- **Monitoring**: Logging, health checks, metrics
+- **Scaling**: Horizontal and vertical scaling strategies
 
 ## Best Practices
 

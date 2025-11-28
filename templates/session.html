@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session {{ session_id[:8] }} - Legal Risk Analysis</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-nav">
+                <a href="/" class="back-link">← Back to Dashboard</a>
+            </div>
+            <h1>📊 Analysis Session</h1>
+            <p class="subtitle">Session ID: {{ session_id }}</p>
+        </header>
+
+        <main>
+            <!-- Session Status -->
+            <section class="card">
+                <div class="session-status-header">
+                    <h2>Status Overview</h2>
+                    <span class="status-badge status-{{ session.status }}" id="currentStatus">
+                        {{ session.status }}
+                    </span>
+                </div>
+
+                <div class="status-grid">
+                    <div class="status-item">
+                        <strong>Created:</strong>
+                        <span>{{ session.created_at }}</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>Data Room:</strong>
+                        <span>{{ session.data_room_path }}</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>Output Directory:</strong>
+                        <span>{{ session.output_directory }}</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>Current Iteration:</strong>
+                        <span id="currentIteration">{{ session.current_iteration }}</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Real-time Updates -->
+            <section class="card">
+                <h2>📡 Real-time Updates</h2>
+                <div id="updates" class="updates-log">
+                    <div class="update-item update-info">
+                        <span class="update-time">{{ session.created_at }}</span>
+                        <span class="update-message">Session initialized</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pending Approvals -->
+            {% if session.pending_approvals %}
+            <section class="card approval-card">
+                <h2>⏳ Pending Approvals</h2>
+                <p class="approval-description">
+                    The analysis agent is requesting approval for the following actions.
+                    Review and approve or modify each action below.
+                </p>
+
+                <form id="approvalForm" action="/api/approval/submit" method="POST">
+                    <input type="hidden" name="session_id" value="{{ session_id }}">
+
+                    <div class="approvals-container">
+                        {% for approval in session.pending_approvals %}
+                        <div class="approval-item">
+                            <div class="approval-header">
+                                <h3>{{ approval.tool_name }}</h3>
+                                <span class="approval-id">ID: {{ approval.tool_call_id }}</span>
+                            </div>
+
+                            <div class="approval-body">
+                                <h4>Proposed Arguments:</h4>
+                                <pre class="approval-args">{{ approval.args | tojson(indent=2) }}</pre>
+
+                                <div class="approval-actions">
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            name="decision_{{ loop.index0 }}"
+                                            value="approve"
+                                            checked
+                                        >
+                                        <span class="approve-label">✓ Approve</span>
+                                    </label>
+
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            name="decision_{{ loop.index0 }}"
+                                            value="modify"
+                                        >
+                                        <span class="modify-label">✎ Modify</span>
+                                    </label>
+
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            name="decision_{{ loop.index0 }}"
+                                            value="reject"
+                                        >
+                                        <span class="reject-label">✗ Reject</span>
+                                    </label>
+                                </div>
+
+                                <div class="modification-area" style="display: none;">
+                                    <label>Modified Arguments (JSON):</label>
+                                    <textarea
+                                        name="modified_args_{{ loop.index0 }}"
+                                        class="modification-input"
+                                        rows="6"
+                                    >{{ approval.args | tojson(indent=2) }}</textarea>
+                                </div>
+
+                                <input type="hidden" name="tool_call_id_{{ loop.index0 }}" value="{{ approval.tool_call_id }}">
+                                <input type="hidden" name="tool_name_{{ loop.index0 }}" value="{{ approval.tool_name }}">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <input type="hidden" name="approval_count" value="{{ session.pending_approvals | length }}">
+
+                    <button type="submit" class="btn btn-primary btn-large">
+                        ✓ Submit All Approvals
+                    </button>
+                </form>
+            </section>
+            {% endif %}
+
+            <!-- Extracted Files -->
+            {% if session.extracted_files %}
+            <section class="card">
+                <h2>📁 Generated Files</h2>
+
+                <div class="files-list">
+                    {% for file in session.extracted_files %}
+                    <div class="file-item">
+                        <div class="file-icon">📄</div>
+                        <div class="file-info">
+                            <strong>{{ file }}</strong>
+                        </div>
+                        <div class="file-actions">
+                            <a
+                                href="/api/download/{{ session_id }}/{{ file }}"
+                                class="btn btn-small"
+                                download
+                            >
+                                ⬇ Download
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Session Actions -->
+            <section class="card">
+                <h2>⚙️ Session Actions</h2>
+
+                <div class="action-buttons">
+                    <button onclick="refreshSession()" class="btn btn-secondary">
+                        🔄 Refresh Status
+                    </button>
+
+                    {% if session.status == 'completed' or session.status == 'error' %}
+                    <button onclick="deleteSession()" class="btn btn-danger">
+                        🗑️ Delete Session
+                    </button>
+                    {% endif %}
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Legal Risk Analysis System v1.0.0 | Session: {{ session_id[:8] }}</p>
+        </footer>
+    </div>
+
+    <script>
+        const sessionId = "{{ session_id }}";
+    </script>
+    <script src="/static/js/session.js"></script>
+</body>
+</html>
